@@ -145,12 +145,12 @@
     <div class="marca">
       <div class="logo-box" id="logoBox"><img id="logo" alt="Difútbol"></div>
       <div>
-        <div class="titulo">PARTIDOS DEL DÍA</div>
+        <div class="titulo" id="titulo">PARTIDOS DEL DÍA</div>
         <div class="sub" id="fecha">—</div>
       </div>
     </div>
     <div class="hdr-der">
-      <div class="kpi"><b id="total">0</b><span>partidos<br>hoy</span></div>
+      <div class="kpi"><b id="total">0</b><span id="totalTxt">partidos<br>hoy</span></div>
       <div class="reloj" id="reloj">--:--</div>
     </div>
   </header>
@@ -263,8 +263,6 @@ async function cargarDatos() {
 
 function aplicarDatos(d) {
   datos = d;
-  $('fecha').textContent = d.fechaTexto;
-  $('total').textContent = Number(d.total).toLocaleString('es-CO');
   reconstruir(true);
 }
 
@@ -305,6 +303,7 @@ function reconstruir(mantenerPosicion) {
 
   if (!paginas.length) {
     detenerRotacion();
+    pintarEncabezado('PARTIDOS DEL DÍA', datos.fechaTexto, datos.total, 'partidos<br>hoy');
     pintarBarra({ nombre: 'Sin partidos', color: ACENTOS[1], badge: '0 partidos', l1: '', l2: '' });
     $('siguiente').textContent = '';
     mostrarMensaje(datos.total ? 'Partidos de hoy finalizados' : 'Sin partidos programados',
@@ -388,6 +387,7 @@ function pintarHoy(pg) {
   const l2 = [pg.totalPags > 1 ? `Página <b>${pg.pag}</b> de <b>${pg.totalPags}</b>` : '',
               pg.finalizados ? `<b>${pg.finalizados}</b> finalizado${pg.finalizados === 1 ? '' : 's'}` : '']
              .filter(Boolean).join(' · ');
+  pintarEncabezado('PARTIDOS DEL DÍA', datos.fechaTexto, datos.total, 'partidos<br>hoy');
   pintarBarra({ nombre: pg.comp.nombre, color,
     badge: pg.comp.total + (pg.comp.total === 1 ? ' partido' : ' partidos'),
     l1: `Competición <b>${pg.pos + 1}</b> de <b>${pg.totalComps}</b>`, l2 });
@@ -401,14 +401,30 @@ function pintarSemana() {
   // Solo los días siguientes: HOY ya se proyecta en detalle antes
   const dias = datos.semana.dias;
   const total = dias.reduce((s, d) => s + d.total, 0);
-  pintarBarra({ nombre: 'Próximos días', color: ACENTOS[1],
-    badge: total.toLocaleString('es-CO') + (total === 1 ? ' partido' : ' partidos'),
-    l1: `Los <b>${dias.length}</b> días siguientes`, l2: '' });
+  pintarEncabezado('PRÓXIMOS PARTIDOS', rangoDias(dias), total, `partidos<br>próximos ${dias.length} días`);
+  pintarBarra({ nombre: 'Resumen por competición', color: ACENTOS[1],
+    badge: `${dias.length} días`, l1: '', l2: '' });
   $('grid').style.display = 'none';
   const sem = $('semana');
   sem.style.display = 'grid';
   sem.style.gridTemplateColumns = `repeat(${dias.length},minmax(0,1fr))`;
   sem.innerHTML = dias.map(d => columnaDia(d)).join('');
+}
+
+// El encabezado cambia según la vista: HOY o PRÓXIMOS DÍAS
+function pintarEncabezado(titulo, subtitulo, total, etiqueta) {
+  $('titulo').textContent = titulo;
+  $('fecha').textContent = subtitulo;
+  $('total').textContent = Number(total).toLocaleString('es-CO');
+  $('totalTxt').innerHTML = etiqueta;
+}
+
+// "Del martes 6 al sábado 10 de octubre" (o con dos meses si cambia el mes)
+function rangoDias(dias) {
+  if (!dias.length) return '';
+  const a = dias[0], b = dias[dias.length - 1];
+  const ini = `${a.diaSemana.toLowerCase()} ${a.diaNum}` + (a.mes !== b.mes ? ` de ${a.mes}` : '');
+  return `Del ${ini} al ${b.diaSemana.toLowerCase()} ${b.diaNum} de ${b.mes}`;
 }
 
 function textoSiguiente(i) {
