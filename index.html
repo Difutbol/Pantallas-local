@@ -193,10 +193,10 @@ const CONFIG = {
   URL_LOGO: 'https://lh3.googleusercontent.com/d/1Fywa8gp80GLg49ZRyOLPxpAfwSnYZVzW',
 
   SEGUNDOS_POR_PAGINA: 10,      // cada página de HOY
-  SEGUNDOS_SEMANA: 20,          // vista PRÓXIMOS DÍAS (al final de cada vuelta)
+  SEGUNDOS_SEMANA: 20,          // vista PRÓXIMOS DÍAS (días siguientes, al final de cada vuelta)
   MOSTRAR_SEMANA: true,
 
-  OCULTAR_FINALIZADOS: true,    // los partidos que ya terminaron salen de la rotación
+  OCULTAR_FINALIZADOS: false,   // true = los partidos que ya terminaron salen de la rotación
   UMBRAL_DENSO: 100,            // si hay más partidos que esto, se usa la grilla densa
   NORMAL: { COLUMNAS: 2, FILAS: 7 },   // 14 por página
   DENSO:  { COLUMNAS: 3, FILAS: 8 },   // 24 por página
@@ -398,15 +398,17 @@ function pintarHoy(pg) {
 }
 
 function pintarSemana() {
-  const dias = [diaDeHoy()].concat(datos.semana.dias);
+  // Solo los días siguientes: HOY ya se proyecta en detalle antes
+  const dias = datos.semana.dias;
   const total = dias.reduce((s, d) => s + d.total, 0);
   pintarBarra({ nombre: 'Próximos días', color: ACENTOS[1],
     badge: total.toLocaleString('es-CO') + (total === 1 ? ' partido' : ' partidos'),
-    l1: `Hoy y los <b>${dias.length - 1}</b> días siguientes`, l2: '' });
+    l1: `Los <b>${dias.length}</b> días siguientes`, l2: '' });
   $('grid').style.display = 'none';
   const sem = $('semana');
   sem.style.display = 'grid';
-  sem.innerHTML = dias.map((d, k) => columnaDia(d, k === 0)).join('');
+  sem.style.gridTemplateColumns = `repeat(${dias.length},minmax(0,1fr))`;
+  sem.innerHTML = dias.map(d => columnaDia(d)).join('');
 }
 
 function textoSiguiente(i) {
@@ -448,26 +450,12 @@ function tarjeta(p, color, ahora) {
     </div>`;
 }
 
-/* ---------- Columna de HOY para la vista de próximos días ---------- */
-function diaDeHoy() {
-  const info = datos.dia || { diaSemana: (datos.fechaTexto || '').split(' ')[0], diaNum: '', mes: '' };
-  const comps = datos.competiciones.map(c => ({ nombre: c.nombre, total: c.total,
-    desde: c.partidos[0].hora, hasta: c.partidos[c.partidos.length - 1].hora }));
-  const d = Object.assign({}, info, { total: datos.total, competiciones: comps });
-  if (datos.total && datos.total <= CONFIG.UMBRAL_DETALLE_SEMANA) {
-    d.partidos = [];
-    datos.competiciones.forEach(c => c.partidos.forEach(p => d.partidos.push(Object.assign({ torneo: c.nombre }, p))));
-    d.partidos.sort((a, b) => a.inicio - b.inicio);
-  }
-  return d;
-}
-
 function nombreCorto(n) { return String(n).replace(/\s*\/\s*\d{4}\s*$/, ''); }
 
-function columnaDia(d, esHoy) {
-  const cab = `<div class="dia-h ${esHoy ? 'hoy' : ''}">
-      <div><div class="dia-nom">${esHoy ? 'Hoy' : esc(d.diaSemana)}</div>
-        <div class="dia-fecha">${esHoy ? esc(d.diaSemana) + ' ' : ''}${esc(d.diaNum)} de ${esc(d.mes)}</div></div>
+function columnaDia(d) {
+  const cab = `<div class="dia-h">
+      <div><div class="dia-nom">${esc(d.diaSemana)}</div>
+        <div class="dia-fecha">${esc(d.diaNum)} de ${esc(d.mes)}</div></div>
       <div class="dia-tot"><b>${Number(d.total).toLocaleString('es-CO')}</b><span>${d.total === 1 ? 'partido' : 'partidos'}</span></div>
     </div>`;
   let cuerpo;
