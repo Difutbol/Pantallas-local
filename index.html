@@ -20,13 +20,13 @@
   #escenario{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;
     background:var(--gris-cl);display:flex;flex-direction:column;overflow:hidden}
 
-  /* Encabezado */
+  /* ---------- Encabezado ---------- */
   header{height:130px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;
     background:linear-gradient(90deg,var(--azul-osc),var(--azul));color:#fff}
-  .marca{display:flex;align-items:center;gap:26px}
-  .tri{display:flex;gap:6px}
-  .tri i{display:block;width:12px;height:76px;border-radius:3px}
-  .tri i:nth-child(1){background:var(--amarillo)} .tri i:nth-child(2){background:#fff} .tri i:nth-child(3){background:var(--rojo)}
+  .marca{display:flex;align-items:center;gap:28px}
+  .logo-box{background:#fff;border-radius:14px;height:100px;padding:10px 20px;display:flex;align-items:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .logo-box img{height:80px;width:auto;display:block}
   .titulo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:66px;letter-spacing:2px;line-height:1}
   .sub{font-size:26px;font-weight:600;opacity:.85;margin-top:4px}
   .hdr-der{display:flex;align-items:center;gap:36px}
@@ -39,7 +39,7 @@
   .franja{height:8px;flex:none;display:flex}
   .franja i{flex:1} .franja i:nth-child(1){background:var(--amarillo)} .franja i:nth-child(2){background:var(--azul)} .franja i:nth-child(3){background:var(--rojo)}
 
-  /* Barra de competicion */
+  /* ---------- Barra de competición ---------- */
   .compbar{height:110px;flex:none;display:flex;align-items:center;gap:24px;padding:0 40px;background:#fff;
     border-bottom:1px solid #E2E8F0}
   .comp-acento{width:14px;height:66px;border-radius:4px;flex:none;background:var(--amarillo)}
@@ -49,17 +49,22 @@
   .comp-meta{flex:none;text-align:right;font-size:22px;font-weight:600;color:var(--gris);line-height:1.35}
   .comp-meta b{color:var(--negro)}
 
-  /* Grilla de partidos (se llena de arriba a abajo, columna por columna) */
-  main{flex:1;min-height:0;position:relative;padding:22px 32px;display:grid;
+  /* ---------- Contenido ---------- */
+  .vista{flex:1;min-height:0;position:relative;transition:opacity .35s ease,transform .35s ease}
+  .vista.salida{opacity:0;transform:translateY(10px)}
+
+  /* Vista HOY: grilla de partidos (se llena columna por columna) */
+  #grid{position:absolute;inset:0;padding:22px 32px;display:grid;
     grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--filas),minmax(0,1fr));
-    grid-auto-flow:column;gap:14px 18px;transition:opacity .35s ease,transform .35s ease}
-  main.salida{opacity:0;transform:translateY(10px)}
+    grid-auto-flow:column;gap:14px 18px}
 
   .card{background:#fff;border-radius:10px;border-left:10px solid var(--acento);box-shadow:0 2px 6px rgba(15,23,42,.08);
     display:grid;grid-template-columns:150px minmax(0,1fr) auto;align-items:center;gap:20px;padding-right:22px;min-height:0}
   .hora{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:32px;color:var(--negro);
     text-align:center;line-height:1.05;align-self:stretch;display:flex;align-items:center;justify-content:center;
-    border-right:2px solid var(--gris-cl);padding:0 8px}
+    border-right:2px solid var(--gris-cl);padding:0 8px;flex-direction:column}
+  .hora small{display:block;font-size:.62em;font-weight:700;color:var(--gris);margin-top:2px}
+  .hora .hc{display:block}
   .info{min-width:0}
   .eq{display:flex;align-items:center;gap:14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;
     text-transform:uppercase;color:var(--negro);line-height:1.1}
@@ -77,14 +82,52 @@
   .card.st-vivo{box-shadow:0 0 0 3px rgba(22,163,74,.35),0 2px 6px rgba(15,23,42,.08)}
   @keyframes pulso{0%,100%{opacity:1}50%{opacity:.25}}
 
+  /* Modo DENSO (muchos partidos): 3 columnas x 8 filas, letra más compacta */
+  .denso #grid{gap:12px 14px}
+  .denso .card{grid-template-columns:116px minmax(0,1fr) auto;gap:14px;padding-right:14px;border-left-width:8px}
+  .denso .hora{font-size:25px}
+  .denso .eq{font-size:24px;gap:10px}
+  .denso .eq .vs{font-size:14px;padding:2px 6px}
+  .denso .det{font-size:15px;margin-top:3px}
+  .denso .chip{font-size:14px;padding:4px 10px}
+  .denso .chip.prog{display:none}
+
+  /* Vista PRÓXIMOS DÍAS: 5 columnas */
+  #semana{position:absolute;inset:0;padding:22px 32px;display:none;
+    grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+  .dia{background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 2px 6px rgba(15,23,42,.08);min-height:0}
+  .dia-h{background:var(--azul-osc);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border-top:8px solid var(--azul)}
+  .dia-h.hoy{border-top-color:var(--amarillo)}
+  .dia-nom{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;text-transform:uppercase;line-height:1}
+  .dia-fecha{font-size:19px;font-weight:600;opacity:.85;margin-top:4px}
+  .dia-tot{text-align:center;line-height:1}
+  .dia-tot b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:var(--amarillo)}
+  .dia-tot span{font-size:15px;font-weight:600;opacity:.85}
+  .dia-b{flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .ci{border-left:6px solid var(--acento);background:var(--gris-cl);border-radius:8px;padding:9px 12px}
+  .ci-n{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:21px;text-transform:uppercase;color:var(--negro);
+    line-height:1.12;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ci-m{font-size:16px;font-weight:600;color:var(--gris);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci-m b{color:var(--negro)}
+  .mi{border-left:6px solid var(--acento);background:var(--gris-cl);border-radius:8px;padding:8px 12px}
+  .mi-h{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--azul)}
+  .mi-e{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;color:var(--negro);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+  .mi-e em{font-style:normal;color:var(--rojo);font-size:17px;margin:0 6px}
+  .mi-t{font-size:14px;font-weight:600;color:var(--gris);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mas{font-size:18px;font-weight:700;color:var(--azul);text-align:center;padding:6px}
+  .dia-vacio{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:600;color:#94A3B8;padding:20px}
+
   /* Mensajes (cargando / sin partidos / error) */
-  .mensaje{position:absolute;left:0;right:0;top:248px;bottom:64px;display:none;flex-direction:column;align-items:center;
+  .mensaje{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
     justify-content:center;text-align:center;background:var(--gris-cl);z-index:5}
   .mensaje.on{display:flex}
   .mensaje h2{font-family:'Barlow Condensed',sans-serif;font-size:72px;font-weight:800;color:var(--negro);text-transform:uppercase}
   .mensaje p{font-size:28px;color:var(--gris);margin-top:12px}
 
-  /* Pie */
+  /* ---------- Pie ---------- */
   footer{height:64px;flex:none;position:relative;display:flex;align-items:center;justify-content:space-between;
     padding:0 40px;background:var(--azul-osc);color:#fff;font-size:22px;font-weight:600}
   .barra-prog{position:absolute;left:0;right:0;top:0;height:6px;background:rgba(255,255,255,.15)}
@@ -100,14 +143,14 @@
 <div id="escenario">
   <header>
     <div class="marca">
-      <div class="tri"><i></i><i></i><i></i></div>
+      <div class="logo-box" id="logoBox"><img id="logo" alt="Difútbol"></div>
       <div>
         <div class="titulo">PARTIDOS DEL DÍA</div>
         <div class="sub" id="fecha">—</div>
       </div>
     </div>
     <div class="hdr-der">
-      <div class="kpi"><b id="total">0</b><span>partidos<br>programados</span></div>
+      <div class="kpi"><b id="total">0</b><span>partidos<br>hoy</span></div>
       <div class="reloj" id="reloj">--:--</div>
     </div>
   </header>
@@ -123,9 +166,11 @@
     </div>
   </section>
 
-  <main id="grid"></main>
-
-  <div class="mensaje on" id="mensaje"><h2 id="msjTitulo">Cargando partidos…</h2><p id="msjTexto">Un momento, por favor.</p></div>
+  <div class="vista" id="vista">
+    <main id="grid"></main>
+    <section id="semana"></section>
+    <div class="mensaje on" id="mensaje"><h2 id="msjTitulo">Cargando partidos…</h2><p id="msjTexto">Un momento, por favor.</p></div>
+  </div>
 
   <footer>
     <div class="barra-prog"><div id="progreso"></div></div>
@@ -145,11 +190,22 @@ const CONFIG = {
   // URL de la Web App de Apps Script (termina en /exec).
   // Si se deja vacía, el board muestra datos de DEMOSTRACIÓN.
   WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwHhM_Z8fSkGUzJ4B1uxx1f8yj3H3cjzXdD2C4AT1gOhFXMhzEPqGsIGkg-jtLSOw4PeA/exec',
-  SEGUNDOS_POR_PAGINA: 10,   // tiempo que dura cada página en pantalla
-  COLUMNAS: 2,               // columnas de partidos por página
-  FILAS: 7,                  // filas por columna  -> 14 partidos por página
-  REFRESCO_DATOS_MIN: 5,     // cada cuánto se vuelven a pedir los datos
-  RECARGA_COMPLETA_HORAS: 6, // recarga total de la página (limpia memoria del TV)
+  URL_LOGO: 'https://lh3.googleusercontent.com/d/1Fywa8gp80GLg49ZRyOLPxpAfwSnYZVzW',
+
+  SEGUNDOS_POR_PAGINA: 10,      // cada página de HOY
+  SEGUNDOS_SEMANA: 20,          // vista PRÓXIMOS DÍAS (al final de cada vuelta)
+  MOSTRAR_SEMANA: true,
+
+  OCULTAR_FINALIZADOS: true,    // los partidos que ya terminaron salen de la rotación
+  UMBRAL_DENSO: 100,            // si hay más partidos que esto, se usa la grilla densa
+  NORMAL: { COLUMNAS: 2, FILAS: 7 },   // 14 por página
+  DENSO:  { COLUMNAS: 3, FILAS: 8 },   // 24 por página
+
+  UMBRAL_DETALLE_SEMANA: 6,     // días con hasta N partidos muestran cada partido
+  MAX_ITEMS_DIA: 6,             // elementos visibles por columna de día
+
+  REFRESCO_DATOS_MIN: 5,        // cada cuánto se vuelven a pedir los datos
+  RECARGA_COMPLETA_HORAS: 6,    // recarga total de la página (limpia memoria del TV)
   TZ: 'America/Bogota'
 };
 const ACENTOS = ['#FFD100', '#1B4F9C', '#D62828'];
@@ -205,38 +261,60 @@ async function cargarDatos() {
   setTimeout(cargarDatos, ok ? CONFIG.REFRESCO_DATOS_MIN * 60000 : 60000);
 }
 
-function construirPaginas(d) {
-  const porPagina = CONFIG.COLUMNAS * CONFIG.FILAS;
-  const out = [];
-  d.competiciones.forEach((comp, ci) => {
-    const totalPags = Math.max(1, Math.ceil(comp.partidos.length / porPagina));
-    for (let p = 0; p < totalPags; p++) {
-      out.push({ comp, ci, pag: p + 1, totalPags, partidos: comp.partidos.slice(p * porPagina, (p + 1) * porPagina) });
-    }
-  });
-  return out;
-}
-
 function aplicarDatos(d) {
-  const actual = paginas[idx];
   datos = d;
   $('fecha').textContent = d.fechaTexto;
   $('total').textContent = Number(d.total).toLocaleString('es-CO');
-  paginas = construirPaginas(d);
+  reconstruir(true);
+}
+
+/* ============================================================
+   PÁGINAS: HOY (por competición) + PRÓXIMOS DÍAS al final
+   ============================================================ */
+function construirPaginas() {
+  const ahora = Date.now();
+  const comps = datos.competiciones.map((c, ci) => {
+    const vis = CONFIG.OCULTAR_FINALIZADOS ? c.partidos.filter(p => estado(p, ahora) !== 'fin') : c.partidos;
+    return { comp: c, ci, vis, finalizados: c.partidos.length - vis.length };
+  }).filter(x => x.vis.length);
+
+  const totalVis = comps.reduce((s, x) => s + x.vis.length, 0);
+  const denso = totalVis > CONFIG.UMBRAL_DENSO;
+  const modo = denso ? CONFIG.DENSO : CONFIG.NORMAL;
+  $('escenario').classList.toggle('denso', denso);
+  document.documentElement.style.setProperty('--cols', modo.COLUMNAS);
+  document.documentElement.style.setProperty('--filas', modo.FILAS);
+  const porPagina = modo.COLUMNAS * modo.FILAS;
+
+  const out = [];
+  comps.forEach((x, pos) => {
+    const totalPags = Math.ceil(x.vis.length / porPagina);
+    for (let p = 0; p < totalPags; p++) {
+      out.push({ tipo: 'hoy', comp: x.comp, ci: x.ci, pos, totalComps: comps.length, pag: p + 1, totalPags,
+        finalizados: x.finalizados, partidos: x.vis.slice(p * porPagina, (p + 1) * porPagina),
+        clave: 'hoy|' + x.comp.nombre + '|' + (p + 1) });
+    }
+  });
+  if (CONFIG.MOSTRAR_SEMANA && datos.semana && datos.semana.dias) out.push({ tipo: 'semana', clave: 'semana' });
+  return out;
+}
+
+function reconstruir(mantenerPosicion) {
+  const actual = paginas[idx];
+  paginas = construirPaginas();
 
   if (!paginas.length) {
     detenerRotacion();
-    $('compNombre').textContent = 'Sin partidos';
-    $('compBadge').textContent = '0 partidos';
-    $('compIndice').textContent = ''; $('compPagina').textContent = ''; $('siguiente').textContent = '';
-    mostrarMensaje('Sin partidos programados', 'No hay partidos en el calendario para hoy.');
+    pintarBarra({ nombre: 'Sin partidos', color: ACENTOS[1], badge: '0 partidos', l1: '', l2: '' });
+    $('siguiente').textContent = '';
+    mostrarMensaje(datos.total ? 'Partidos de hoy finalizados' : 'Sin partidos programados',
+      datos.total ? 'Todos los partidos del día ya terminaron.' : 'No hay partidos en el calendario para hoy.');
     return;
   }
 
-  // Mantener la misma competición/página en pantalla al refrescar
   let nuevo = 0;
-  if (actual) {
-    const j = paginas.findIndex(p => p.comp.nombre === actual.comp.nombre && p.pag === actual.pag);
+  if (mantenerPosicion && actual) {
+    const j = paginas.findIndex(p => p.clave === actual.clave);
     if (j >= 0) nuevo = j;
   }
   idx = nuevo;
@@ -244,19 +322,26 @@ function aplicarDatos(d) {
 }
 
 /* ============================================================
-   ROTACIÓN DE PÁGINAS
+   ROTACIÓN
    ============================================================ */
 function programarSiguiente() {
   rotando = true;
   clearTimeout(tPagina);
-  const ms = CONFIG.SEGUNDOS_POR_PAGINA * 1000;
+  const pg = paginas[idx];
+  const ms = (pg && pg.tipo === 'semana' ? CONFIG.SEGUNDOS_SEMANA : CONFIG.SEGUNDOS_POR_PAGINA) * 1000;
   arrancarProgreso(ms);
   tPagina = setTimeout(() => {
-    const anterior = idx;
-    idx = paginas.length ? (idx + 1) % paginas.length : 0;
-    // Al terminar una vuelta completa, recargar la página si ya lleva muchas horas abierta
-    if (idx === 0 && Date.now() - INICIO_PAGINA > CONFIG.RECARGA_COMPLETA_HORAS * 3600000) { location.reload(); return; }
-    mostrarPagina(idx, idx !== anterior);
+    const anterior = paginas[idx] && paginas[idx].clave;
+    idx++;
+    if (idx >= paginas.length) {
+      // Fin de la vuelta: recarga total si lleva muchas horas, si no se rearman
+      // las páginas (así salen los partidos que ya finalizaron)
+      if (Date.now() - INICIO_PAGINA > CONFIG.RECARGA_COMPLETA_HORAS * 3600000) { location.reload(); return; }
+      idx = 0;
+      paginas = construirPaginas();
+      if (!paginas.length) { rotando = false; reconstruir(false); return; }
+    }
+    mostrarPagina(idx, paginas[idx].clave !== anterior);
     programarSiguiente();
   }, ms);
 }
@@ -271,39 +356,72 @@ function arrancarProgreso(ms) {
 }
 
 /* ============================================================
-   PINTAR UNA PÁGINA
+   PINTAR
    ============================================================ */
 function mostrarPagina(i, animar) {
   const pg = paginas[i];
   if (!pg) return;
-  const grid = $('grid');
+  const vista = $('vista');
   const pintar = () => {
     ocultarMensaje();
-    const color = ACENTOS[pg.ci % ACENTOS.length];
-    const ahora = Date.now();
-    $('compAcento').style.background = color;
-    $('compNombre').textContent = pg.comp.nombre;
-    const badge = $('compBadge');
-    badge.textContent = pg.comp.total + (pg.comp.total === 1 ? ' partido' : ' partidos');
-    badge.style.background = color;
-    badge.style.color = color === '#FFD100' ? '#0F172A' : '#FFFFFF';
-    $('compIndice').innerHTML = `Competición <b>${pg.ci + 1}</b> de <b>${datos.competiciones.length}</b>`;
-    $('compPagina').innerHTML = pg.totalPags > 1 ? `Página <b>${pg.pag}</b> de <b>${pg.totalPags}</b>` : '';
-    grid.innerHTML = pg.partidos.map(p => tarjeta(p, color, ahora)).join('');
-
-    // Siguiente competición (para el pie)
-    const sig = siguienteCompeticion(i);
-    $('siguiente').innerHTML = sig ? `Siguiente: <b>${esc(sig)}</b>` : '';
-    grid.classList.remove('salida');
+    if (pg.tipo === 'semana') pintarSemana(); else pintarHoy(pg);
+    $('siguiente').innerHTML = textoSiguiente(i);
+    vista.classList.remove('salida');
   };
-  if (animar) { grid.classList.add('salida'); setTimeout(pintar, 350); } else pintar();
+  if (animar) { vista.classList.add('salida'); setTimeout(pintar, 350); } else pintar();
 }
 
-function siguienteCompeticion(i) {
-  if (!datos || datos.competiciones.length < 2) return '';
-  const actual = paginas[i].ci;
-  const sigCi = (actual + 1) % datos.competiciones.length;
-  return datos.competiciones[sigCi].nombre;
+function pintarBarra(o) {
+  $('compAcento').style.background = o.color;
+  $('compNombre').textContent = o.nombre;
+  const badge = $('compBadge');
+  badge.textContent = o.badge;
+  badge.style.background = o.color;
+  badge.style.color = o.color === '#FFD100' ? '#0F172A' : '#FFFFFF';
+  $('compIndice').innerHTML = o.l1;
+  $('compPagina').innerHTML = o.l2;
+}
+
+function pintarHoy(pg) {
+  const color = ACENTOS[pg.ci % ACENTOS.length];
+  const ahora = Date.now();
+  const l2 = [pg.totalPags > 1 ? `Página <b>${pg.pag}</b> de <b>${pg.totalPags}</b>` : '',
+              pg.finalizados ? `<b>${pg.finalizados}</b> finalizado${pg.finalizados === 1 ? '' : 's'}` : '']
+             .filter(Boolean).join(' · ');
+  pintarBarra({ nombre: pg.comp.nombre, color,
+    badge: pg.comp.total + (pg.comp.total === 1 ? ' partido' : ' partidos'),
+    l1: `Competición <b>${pg.pos + 1}</b> de <b>${pg.totalComps}</b>`, l2 });
+  $('semana').style.display = 'none';
+  const grid = $('grid');
+  grid.style.display = 'grid';
+  grid.innerHTML = pg.partidos.map(p => tarjeta(p, color, ahora)).join('');
+}
+
+function pintarSemana() {
+  const dias = [diaDeHoy()].concat(datos.semana.dias);
+  const total = dias.reduce((s, d) => s + d.total, 0);
+  pintarBarra({ nombre: 'Próximos días', color: ACENTOS[1],
+    badge: total.toLocaleString('es-CO') + (total === 1 ? ' partido' : ' partidos'),
+    l1: `Hoy y los <b>${dias.length - 1}</b> días siguientes`, l2: '' });
+  $('grid').style.display = 'none';
+  const sem = $('semana');
+  sem.style.display = 'grid';
+  sem.innerHTML = dias.map((d, k) => columnaDia(d, k === 0)).join('');
+}
+
+function textoSiguiente(i) {
+  const pg = paginas[i];
+  for (let j = 1; j < paginas.length; j++) {
+    const sig = paginas[(i + j) % paginas.length];
+    if (sig.tipo === 'semana') return pg.tipo === 'semana' ? '' : 'Siguiente: <b>Próximos días</b>';
+    if (pg.tipo !== 'hoy' || sig.comp.nombre !== pg.comp.nombre) return `Siguiente: <b>${esc(sig.comp.nombre)}</b>`;
+  }
+  return '';
+}
+
+function horaHtml(h) {
+  const m = String(h).match(/^(\d{1,2}:\d{2})\s*(.*)$/);
+  return m ? `<span class="hc">${m[1]}</span><small>${esc(m[2])}</small>` : esc(h);
 }
 
 function estado(p, ahora) {
@@ -324,10 +442,54 @@ function tarjeta(p, color, ahora) {
     ? `<span class="t">${esc(p.local)}</span><span class="vs">VS</span><span class="t">${esc(p.visitante)}</span>`
     : `<span class="t">${esc(p.local)}</span>`;
   return `<div class="card ${st ? 'st-' + st : ''}" style="--acento:${color}">
-      <div class="hora">${esc(p.hora)}</div>
+      <div class="hora">${horaHtml(p.hora)}</div>
       <div class="info"><div class="eq">${equipos}</div><div class="det">${esc(detalle)}</div></div>
       <div class="est">${chip}</div>
     </div>`;
+}
+
+/* ---------- Columna de HOY para la vista de próximos días ---------- */
+function diaDeHoy() {
+  const info = datos.dia || { diaSemana: (datos.fechaTexto || '').split(' ')[0], diaNum: '', mes: '' };
+  const comps = datos.competiciones.map(c => ({ nombre: c.nombre, total: c.total,
+    desde: c.partidos[0].hora, hasta: c.partidos[c.partidos.length - 1].hora }));
+  const d = Object.assign({}, info, { total: datos.total, competiciones: comps });
+  if (datos.total && datos.total <= CONFIG.UMBRAL_DETALLE_SEMANA) {
+    d.partidos = [];
+    datos.competiciones.forEach(c => c.partidos.forEach(p => d.partidos.push(Object.assign({ torneo: c.nombre }, p))));
+    d.partidos.sort((a, b) => a.inicio - b.inicio);
+  }
+  return d;
+}
+
+function nombreCorto(n) { return String(n).replace(/\s*\/\s*\d{4}\s*$/, ''); }
+
+function columnaDia(d, esHoy) {
+  const cab = `<div class="dia-h ${esHoy ? 'hoy' : ''}">
+      <div><div class="dia-nom">${esHoy ? 'Hoy' : esc(d.diaSemana)}</div>
+        <div class="dia-fecha">${esHoy ? esc(d.diaSemana) + ' ' : ''}${esc(d.diaNum)} de ${esc(d.mes)}</div></div>
+      <div class="dia-tot"><b>${Number(d.total).toLocaleString('es-CO')}</b><span>${d.total === 1 ? 'partido' : 'partidos'}</span></div>
+    </div>`;
+  let cuerpo;
+  const max = CONFIG.MAX_ITEMS_DIA;
+  if (!d.total) {
+    cuerpo = '<div class="dia-vacio">Sin partidos programados</div>';
+  } else if (d.partidos && d.partidos.length) {
+    const colorDe = nombre => ACENTOS[Math.max(0, d.competiciones.findIndex(c => c.nombre === nombre)) % ACENTOS.length];
+    cuerpo = d.partidos.slice(0, max).map(p => `<div class="mi" style="--acento:${colorDe(p.torneo)}">
+        <div class="mi-h">${esc(p.hora)}</div>
+        <div class="mi-e">${esc(p.local)}${p.visitante ? '<em>vs</em>' + esc(p.visitante) : ''}</div>
+        <div class="mi-t">${esc([nombreCorto(p.torneo), p.fase].filter(Boolean).join(' · '))}</div>
+      </div>`).join('');
+    if (d.partidos.length > max) cuerpo += `<div class="mas">+${d.partidos.length - max} partidos más</div>`;
+  } else {
+    cuerpo = d.competiciones.slice(0, max).map((c, k) => `<div class="ci" style="--acento:${ACENTOS[k % ACENTOS.length]}">
+        <div class="ci-n">${esc(nombreCorto(c.nombre))}</div>
+        <div class="ci-m"><b>${c.total}</b> ${c.total === 1 ? 'partido' : 'partidos'} · ${esc(c.desde)}${c.desde !== c.hasta ? ' – ' + esc(c.hasta) : ''}</div>
+      </div>`).join('');
+    if (d.competiciones.length > max) cuerpo += `<div class="mas">+${d.competiciones.length - max} competiciones más</div>`;
+  }
+  return `<div class="dia">${cab}<div class="dia-b">${cuerpo}</div></div>`;
 }
 
 function mostrarMensaje(t, txt) { $('msjTitulo').textContent = t; $('msjTexto').textContent = txt; $('mensaje').classList.add('on'); }
@@ -338,44 +500,65 @@ function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&
    DATOS DE DEMOSTRACIÓN (solo si WEB_APP_URL está vacía)
    ============================================================ */
 function datosDemo() {
+  const equipos = ['Boyacá', 'Casanare', 'Tolima', 'Risaralda', 'Antioquia', 'Valle', 'Bogotá', 'Santander',
+    'Atlántico', 'Bolívar', 'Caldas', 'Nariño', 'Huila', 'Meta', 'Cundinamarca', 'Quindío'];
+  const lugares = [['Coliseo El Salitre', 'Bogotá, D.C.'], ['Estadio Manuel Murillo Toro', 'Ibagué'],
+    ['Estadio Jaime Morón', 'Cartagena'], ['Coliseo Jorge Arango', 'Manizales'], ['Estadio Pascual Guerrero', 'Cali']];
   const comps = [
-    ['Campeonato Nacional Sub-15', 38], ['Torneo Nacional Sub-17', 24], ['Copa Nacional Femenina', 15],
-    ['Campeonato Nacional Sub-13', 9], ['Torneo Interligas Sub-20', 5], ['Copa Fútbol Aficionado', 2]
+    ['INTERLIGAS SUB-19 / FUTSAL MASCULINO / 2026', ['GRUPO 1 BOGOTA', 'GRUPO 2 MANIZALES']],
+    ['INTERLIGAS SUB-17 / FUTBOL MASCULINO / 2026', ['FASE FINAL - SEDE CARTAGENA']],
+    ['SUB-17A INTERCLUBES / FÚTBOL MASCULINO / 2026', ['SEGUNDA FASE']],
+    ['NACIONAL SUB-15 / FUTBOL FEMENINO / 2026', ['PRIMERA FASE']],
+    ['COPA DIFÚTBOL / FUTBOL AFICIONADO / 2026', ['OCTAVOS DE FINAL']]
   ];
-  const equipos = ['Club Deportivo Los Andes', 'Atlético Cordillera', 'Real Pacífico FC', 'Club Halcones del Sur', 'Deportivo Llanos',
-    'Escuela Caribe FC', 'Club Juventud Unida', 'Independiente Sabana', 'Club Leones Dorados', 'Deportivo Valle Alto',
-    'Club Estrellas del Norte', 'Atlético Ribereño', 'Club Formativo Andino', 'Unión Cafetera FC'];
-  const lugares = [['Estadio Municipal', 'Medellín'], ['Cancha Sintética La 70', 'Cali'], ['Estadio Olímpico', 'Bogotá'],
-    ['Polideportivo Sur', 'Barranquilla'], ['Unidad Deportiva El Salitre', 'Bogotá'], ['Estadio Departamental', 'Pereira']];
+  const fmt = d => fmtHora.format(d).replace(/\s?([ap])\.?\s?m\.?/i, ' $1. m.');
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  let n = 0;
-  const competiciones = comps.map(([nombre, total]) => {
-    const partidos = [];
-    for (let i = 0; i < total; i++) {
-      n++;
-      const minutos = 7 * 60 + ((i * 37 + n * 13) % (13 * 60));
-      const ini = new Date(hoy.getTime() + Math.round(minutos / 15) * 15 * 60000);
-      const lug = lugares[(i + n) % lugares.length];
-      partidos.push({
-        local: equipos[(i * 2 + n) % equipos.length], visitante: equipos[(i * 2 + n + 5) % equipos.length],
-        hora: fmtHora.format(ini), inicio: ini.getTime(), fin: ini.getTime() + 105 * 60000, todoDia: false,
-        categoria: nombre.match(/Sub-\d+/) ? nombre.match(/Sub-\d+/)[0] : 'Libre', fixture: String(1 + (i % 9)), ronda: '',
-        escenario: lug[0], ciudad: lug[1]
-      });
-    }
-    partidos.sort((a, b) => a.inicio - b.inicio);
-    return { nombre, total, partidos };
+  const generar = (dia, cantidades) => {
+    const lista = []; let n = 0;
+    cantidades.forEach((cant, ci) => {
+      for (let i = 0; i < cant; i++) {
+        n++;
+        const min = 7 * 60 + ((i * 37 + n * 13) % (13 * 60));
+        const ini = new Date(dia.getTime() + Math.round(min / 15) * 15 * 60000);
+        const lug = lugares[(i + n) % lugares.length];
+        lista.push({ torneo: comps[ci][0], local: equipos[(i * 2 + n) % 16], visitante: equipos[(i * 2 + n + 5) % 16],
+          hora: fmt(ini), inicio: ini.getTime(), fin: ini.getTime() + 105 * 60000, todoDia: false,
+          fase: comps[ci][1][i % comps[ci][1].length], categoria: '', fixture: String(1 + (i % 6)), ronda: '',
+          escenario: lug[0], ciudad: lug[1] });
+      }
+    });
+    return lista;
+  };
+  const agrupar = lista => {
+    const g = {};
+    lista.forEach(p => (g[p.torneo] = g[p.torneo] || []).push(p));
+    return Object.keys(g).map(nombre => ({ nombre, total: g[nombre].length,
+      partidos: g[nombre].sort((a, b) => a.inicio - b.inicio) })).sort((a, b) => b.total - a.total);
+  };
+  const diasN = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const info = d => ({ fecha: '', diaSemana: diasN[d.getDay()], diaNum: d.getDate(), mes: meses[d.getMonth()] });
+
+  const partidosHoy = generar(hoy, [24, 14, 9, 5, 2]);
+  const semana = [[60, 42, 18, 11, 7, 4, 3, 2, 1], [3, 2], [0], [120, 80, 35, 10]].map((cant, k) => {
+    const d = new Date(hoy.getTime() + (k + 1) * 864e5);
+    const lista = generar(d, cant.slice(0, comps.length).concat([]));
+    const extras = cant.slice(comps.length).map((c, j) => ({ nombre: `TORNEO REGIONAL ${j + 1} / FUTBOL / 2026`, total: c, desde: '9:00 a. m.', hasta: '4:00 p. m.' }));
+    const g = agrupar(lista).map(c => ({ nombre: c.nombre, total: c.total, desde: c.partidos[0].hora, hasta: c.partidos[c.total - 1].hora }));
+    const res = Object.assign(info(d), { total: lista.length + extras.reduce((s, e) => s + e.total, 0), competiciones: g.concat(extras) });
+    if (res.total && res.total <= CONFIG.UMBRAL_DETALLE_SEMANA) res.partidos = lista.sort((a, b) => a.inicio - b.inicio);
+    return res;
   });
   const fechaTexto = new Intl.DateTimeFormat('es-CO', { timeZone: CONFIG.TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
-  return { ok: true, fecha: '', fechaTexto: fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1),
-    total: competiciones.reduce((s, c) => s + c.total, 0), actualizado: Date.now(), competiciones };
+  return { ok: true, fecha: '', fechaTexto: fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1), dia: info(hoy),
+    total: partidosHoy.length, actualizado: Date.now(), competiciones: agrupar(partidosHoy), semana: { dias: semana } };
 }
 
 /* ============================================================
    ARRANQUE
    ============================================================ */
-document.documentElement.style.setProperty('--cols', CONFIG.COLUMNAS);
-document.documentElement.style.setProperty('--filas', CONFIG.FILAS);
+$('logo').src = CONFIG.URL_LOGO;
+$('logo').onerror = () => { $('logoBox').style.display = 'none'; };
 addEventListener('resize', escalar);
 escalar();
 tickReloj(); setInterval(tickReloj, 1000);
