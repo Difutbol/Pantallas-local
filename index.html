@@ -120,6 +120,32 @@
   .mas{font-size:18px;font-weight:700;color:var(--azul);text-align:center;padding:6px}
   .dia-vacio{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:600;color:#94A3B8;padding:20px}
 
+  /* Vista NOTICIAS: una noticia por página (imagen + texto) */
+  #noticia{position:absolute;inset:0;padding:22px 32px;display:none}
+  .nt{height:100%;background:#fff;border-radius:14px;overflow:hidden;display:grid;
+    grid-template-columns:minmax(0,46%) minmax(0,1fr);box-shadow:0 2px 6px rgba(15,23,42,.08)}
+  .nt-img{position:relative;background:var(--azul-osc);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .nt-img .fondo{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(28px) brightness(.55);transform:scale(1.1)}
+  .nt-img img{position:relative;max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .nt-img.logo{background:#fff}
+  .nt-img.logo img{max-width:62%;max-height:62%}
+  .nt-txt{padding:44px 54px;display:flex;flex-direction:column;min-width:0;border-left:10px solid var(--amarillo)}
+  .nt-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .nt-dia{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:1px;
+    padding:6px 18px;border-radius:8px;background:var(--rojo);color:#fff;text-transform:uppercase}
+  .nt-dia.ayer{background:var(--azul)}
+  .nt-hora{font-size:24px;font-weight:700;color:var(--gris)}
+  .nt-cat{font-size:19px;font-weight:700;color:var(--azul);background:var(--gris-cl);padding:5px 14px;border-radius:30px;
+    white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis}
+  .nt-tit{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1.06;color:var(--negro);
+    text-transform:uppercase;margin-top:26px;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+  .nt-tit.largo{font-size:46px;-webkit-line-clamp:7}
+  .nt-res{font-size:27px;line-height:1.45;color:#334155;margin-top:24px;display:-webkit-box;-webkit-line-clamp:5;
+    -webkit-box-orient:vertical;overflow:hidden}
+  .nt-pie{margin-top:auto;padding-top:22px;display:flex;align-items:center;gap:14px;font-size:24px;font-weight:700;color:var(--gris)}
+  .nt-pie .pdf{background:var(--rojo);color:#fff;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:1px}
+  .nt-pie b{color:var(--azul)}
+
   /* Mensajes (cargando / sin partidos / error) */
   .mensaje{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
     justify-content:center;text-align:center;background:var(--gris-cl);z-index:5}
@@ -169,6 +195,7 @@
   <div class="vista" id="vista">
     <main id="grid"></main>
     <section id="semana"></section>
+    <section id="noticia"></section>
     <div class="mensaje on" id="mensaje"><h2 id="msjTitulo">Cargando partidos…</h2><p id="msjTexto">Un momento, por favor.</p></div>
   </div>
 
@@ -195,6 +222,8 @@ const CONFIG = {
   SEGUNDOS_POR_PAGINA: 10,      // cada página de HOY
   SEGUNDOS_SEMANA: 20,          // vista PRÓXIMOS DÍAS (días siguientes, al final de cada vuelta)
   MOSTRAR_SEMANA: true,
+  MOSTRAR_NOTICIAS: true,       // noticias de difutbol.org de hoy y ayer (después de la semana)
+  SEGUNDOS_NOTICIA: 15,         // tiempo de cada noticia en pantalla
 
   OCULTAR_FINALIZADOS: false,   // true = los partidos que ya terminaron salen de la rotación
   UMBRAL_DENSO: 100,            // si hay más partidos que esto, se usa la grilla densa
@@ -263,6 +292,8 @@ async function cargarDatos() {
 
 function aplicarDatos(d) {
   datos = d;
+  // Precarga las imágenes de las noticias para que aparezcan sin demora
+  (d.noticias || []).forEach(n => { if (n.imagen) { const im = new Image(); im.src = n.imagen; } });
   reconstruir(true);
 }
 
@@ -294,6 +325,9 @@ function construirPaginas() {
     }
   });
   if (CONFIG.MOSTRAR_SEMANA && datos.semana && datos.semana.dias) out.push({ tipo: 'semana', clave: 'semana' });
+  if (CONFIG.MOSTRAR_NOTICIAS && datos.noticias && datos.noticias.length) {
+    datos.noticias.forEach((n, k) => out.push({ tipo: 'noticia', noticia: n, pos: k, total: datos.noticias.length, clave: 'not|' + n.id }));
+  }
   return out;
 }
 
@@ -327,7 +361,11 @@ function programarSiguiente() {
   rotando = true;
   clearTimeout(tPagina);
   const pg = paginas[idx];
-  const ms = (pg && pg.tipo === 'semana' ? CONFIG.SEGUNDOS_SEMANA : CONFIG.SEGUNDOS_POR_PAGINA) * 1000;
+  const seg = !pg ? CONFIG.SEGUNDOS_POR_PAGINA
+            : pg.tipo === 'semana' ? CONFIG.SEGUNDOS_SEMANA
+            : pg.tipo === 'noticia' ? CONFIG.SEGUNDOS_NOTICIA
+            : CONFIG.SEGUNDOS_POR_PAGINA;
+  const ms = seg * 1000;
   arrancarProgreso(ms);
   tPagina = setTimeout(() => {
     const anterior = paginas[idx] && paginas[idx].clave;
@@ -363,7 +401,10 @@ function mostrarPagina(i, animar) {
   const vista = $('vista');
   const pintar = () => {
     ocultarMensaje();
-    if (pg.tipo === 'semana') pintarSemana(); else pintarHoy(pg);
+    $('noticia').style.display = 'none';
+    if (pg.tipo === 'semana') pintarSemana();
+    else if (pg.tipo === 'noticia') pintarNoticia(pg);
+    else pintarHoy(pg);
     $('siguiente').innerHTML = textoSiguiente(i);
     vista.classList.remove('salida');
   };
@@ -427,14 +468,58 @@ function rangoDias(dias) {
   return `Del ${ini} al ${b.diaSemana.toLowerCase()} ${b.diaNum} de ${b.mes}`;
 }
 
+function etiquetaPagina(p) {
+  return p.tipo === 'hoy' ? p.comp.nombre : p.tipo === 'semana' ? 'Próximos días' : 'Noticias';
+}
+
 function textoSiguiente(i) {
   const pg = paginas[i];
+  if (pg.tipo === 'noticia' && pg.pos < pg.total - 1) return 'Siguiente: <b>Otra noticia</b>';
   for (let j = 1; j < paginas.length; j++) {
     const sig = paginas[(i + j) % paginas.length];
-    if (sig.tipo === 'semana') return pg.tipo === 'semana' ? '' : 'Siguiente: <b>Próximos días</b>';
-    if (pg.tipo !== 'hoy' || sig.comp.nombre !== pg.comp.nombre) return `Siguiente: <b>${esc(sig.comp.nombre)}</b>`;
+    if (etiquetaPagina(sig) !== etiquetaPagina(pg)) return `Siguiente: <b>${esc(etiquetaPagina(sig))}</b>`;
   }
   return '';
+}
+
+/* ---------- Vista NOTICIAS ---------- */
+function pintarNoticia(pg) {
+  const n = pg.noticia;
+  const hoyN = datos.noticias.filter(x => x.dia === 'hoy').length;
+  const sub = hoyN === pg.total ? 'Publicadas hoy en difutbol.org'
+            : hoyN === 0 ? 'Publicadas ayer en difutbol.org'
+            : 'Publicadas hoy y ayer en difutbol.org';
+  pintarEncabezado('NOTICIAS', sub, pg.total, pg.total === 1 ? 'noticia' : 'noticias');
+  pintarBarra({ nombre: n.dia === 'hoy' ? 'Noticia de hoy' : 'Noticia de ayer',
+    color: n.dia === 'hoy' ? ACENTOS[2] : ACENTOS[1],
+    badge: `${pg.pos + 1} de ${pg.total}`, l1: '', l2: '' });
+  $('grid').style.display = 'none';
+  $('semana').style.display = 'none';
+
+  const conImagen = !!n.imagen;
+  const img = conImagen ? n.imagen : CONFIG.URL_LOGO;
+  const cats = (n.categorias || []).slice(0, 3).map(c => `<span class="nt-cat">${esc(c)}</span>`).join('');
+  const pie = n.pdf
+    ? '<span class="pdf">PDF</span> Documento completo en <b>difutbol.org</b>'
+    : 'Lee la noticia completa en <b>difutbol.org</b>';
+  const box = $('noticia');
+  box.style.display = 'block';
+  box.innerHTML = `<div class="nt">
+      <div class="nt-img ${conImagen ? '' : 'logo'}">
+        ${conImagen ? `<div class="fondo" style="background-image:url('${esc(img)}')"></div>` : ''}
+        <img src="${esc(img)}" alt="" onerror="this.onerror=null;this.parentNode.className='nt-img logo';this.previousElementSibling&&this.previousElementSibling.remove();this.src=CONFIG.URL_LOGO">
+      </div>
+      <div class="nt-txt" style="border-left-color:${n.dia === 'hoy' ? 'var(--rojo)' : 'var(--azul)'}">
+        <div class="nt-meta">
+          <span class="nt-dia ${n.dia === 'hoy' ? '' : 'ayer'}">${n.dia === 'hoy' ? 'Hoy' : 'Ayer'}</span>
+          ${n.hora ? `<span class="nt-hora">${esc(n.hora)}</span>` : ''}
+          ${cats}
+        </div>
+        <div class="nt-tit ${String(n.titulo).length > 110 ? 'largo' : ''}">${esc(n.titulo)}</div>
+        ${n.resumen ? `<div class="nt-res">${esc(n.resumen)}</div>` : ''}
+        <div class="nt-pie">${pie}</div>
+      </div>
+    </div>`;
 }
 
 function horaHtml(h) {
@@ -555,7 +640,14 @@ function datosDemo() {
   });
   const fechaTexto = new Intl.DateTimeFormat('es-CO', { timeZone: CONFIG.TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
   return { ok: true, fecha: '', fechaTexto: fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1), dia: info(hoy),
-    total: partidosHoy.length, actualizado: Date.now(), competiciones: agrupar(partidosHoy), semana: { dias: semana } };
+    total: partidosHoy.length, actualizado: Date.now(), competiciones: agrupar(partidosHoy), semana: { dias: semana },
+    noticias: [
+      { id: 1, dia: 'hoy', hora: '7:10 a. m.', categorias: ['Programación', 'Calendarios Ligas'], pdf: true, imagen: '',
+        titulo: 'CAMPEONATO NACIONAL INTERCLUBES DE FUTBOL PLAYA MASCULINO 2026, CATEGORIA LIBRE, CLASIFICATORIO PARA COPA LIBERTADORES 2026 – GRUPO UNO SEDE BOGOTA Y GRUPO DOS SEDE BARRANQUILLA', resumen: '' },
+      { id: 2, dia: 'ayer', hora: '4:20 p. m.', categorias: ['Boletines', 'Reglamentos'], pdf: false, imagen: '',
+        titulo: 'CIRCULAR 004 – DIFUTBOL – ACTUALIZACIÓN DE DATOS – COMET',
+        resumen: 'Bogotá D.C., 02 de octubre de 2026. A las ligas departamentales de fútbol, clubes aficionados, jugadores, directivos y cuerpos técnicos. Asunto: actualización general y obligatoria de datos para los Campeonatos 2027 del fútbol aficionado asociado…' }
+    ] };
 }
 
 /* ============================================================
