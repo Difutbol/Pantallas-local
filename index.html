@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Difútbol · Partidos del día</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -129,7 +130,7 @@
   .nt-img img{position:relative;max-width:100%;max-height:100%;object-fit:contain;display:block}
   .nt-img.logo{background:#fff}
   .nt-img.logo img{max-width:62%;max-height:62%}
-  .nt-txt{padding:44px 54px;display:flex;flex-direction:column;min-width:0;border-left:10px solid var(--amarillo)}
+  .nt-txt{padding:38px 54px;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border-left:10px solid var(--amarillo)}
   .nt-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
   .nt-dia{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:1px;
     padding:6px 18px;border-radius:8px;background:var(--rojo);color:#fff;text-transform:uppercase}
@@ -140,11 +141,16 @@
   .nt-tit{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1.06;color:var(--negro);
     text-transform:uppercase;margin-top:26px;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
   .nt-tit.largo{font-size:46px;-webkit-line-clamp:7}
+  .nt-tit.mini{font-size:40px;-webkit-line-clamp:6}
+  .nt-txt > *{flex-shrink:0}
   .nt-res{font-size:27px;line-height:1.45;color:#334155;margin-top:24px;display:-webkit-box;-webkit-line-clamp:5;
     -webkit-box-orient:vertical;overflow:hidden}
-  .nt-pie{margin-top:auto;padding-top:22px;display:flex;align-items:center;gap:14px;font-size:24px;font-weight:700;color:var(--gris)}
-  .nt-pie .pdf{background:var(--rojo);color:#fff;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:1px}
-  .nt-pie b{color:var(--azul)}
+  .nt-pie{margin-top:auto;padding-top:22px;display:flex;align-items:center;gap:28px;border-top:2px solid var(--gris-cl)}
+  .nt-qr{flex:none;width:210px;height:210px;background:#fff;border:3px solid var(--negro);border-radius:12px;padding:10px}
+  .nt-qr svg{width:100%;height:100%;display:block}
+  .nt-qr-txt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:40px;line-height:1.1;color:var(--negro);text-transform:uppercase}
+  .nt-qr-txt small{display:block;font-family:'Barlow',sans-serif;font-size:24px;font-weight:600;text-transform:none;color:var(--gris);margin-top:10px}
+  .nt-qr-txt b{color:var(--azul)}
 
   /* Mensajes (cargando / sin partidos / error) */
   .mensaje{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
@@ -483,6 +489,17 @@ function textoSiguiente(i) {
 }
 
 /* ---------- Vista NOTICIAS ---------- */
+// Código QR (SVG) con el enlace de la noticia. Si la librería no cargó, no se muestra.
+function qrSvg(url) {
+  if (!url || typeof qrcode !== 'function') return '';
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch (e) { return ''; }
+}
+
 function pintarNoticia(pg) {
   const n = pg.noticia;
   const hoyN = datos.noticias.filter(x => x.dia === 'hoy').length;
@@ -499,9 +516,12 @@ function pintarNoticia(pg) {
   const conImagen = !!n.imagen;
   const img = conImagen ? n.imagen : CONFIG.URL_LOGO;
   const cats = (n.categorias || []).slice(0, 3).map(c => `<span class="nt-cat">${esc(c)}</span>`).join('');
-  const pie = n.pdf
-    ? '<span class="pdf">PDF</span> Documento completo en <b>difutbol.org</b>'
-    : 'Lee la noticia completa en <b>difutbol.org</b>';
+  const accion = n.pdf ? 'el documento completo' : 'la noticia completa';
+  const qr = qrSvg(n.link);
+  const pie = qr
+    ? `<div class="nt-qr">${qr}</div>
+       <div class="nt-qr-txt">Escanea para ver<br>${accion}<small>o ingresa a <b>difutbol.org</b></small></div>`
+    : `<div class="nt-qr-txt">Consulta ${accion}<small>en <b>difutbol.org</b></small></div>`;
   const box = $('noticia');
   box.style.display = 'block';
   box.innerHTML = `<div class="nt">
@@ -520,6 +540,20 @@ function pintarNoticia(pg) {
         <div class="nt-pie">${pie}</div>
       </div>
     </div>`;
+  ajustarNoticia();
+}
+
+// Si el texto no cabe (título muy largo), primero se quita el resumen y luego se achica el título
+function ajustarNoticia() {
+  const txt = document.querySelector('#noticia .nt-txt');
+  if (!txt) return;
+  const sobra = () => txt.scrollHeight > txt.clientHeight + 2;
+  if (!sobra()) return;
+  const res = txt.querySelector('.nt-res');
+  if (res) res.remove();
+  const tit = txt.querySelector('.nt-tit');
+  if (sobra() && !tit.classList.contains('largo')) tit.classList.add('largo');
+  if (sobra()) { tit.classList.remove('largo'); tit.classList.add('mini'); }
 }
 
 function horaHtml(h) {
@@ -642,9 +676,9 @@ function datosDemo() {
   return { ok: true, fecha: '', fechaTexto: fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1), dia: info(hoy),
     total: partidosHoy.length, actualizado: Date.now(), competiciones: agrupar(partidosHoy), semana: { dias: semana },
     noticias: [
-      { id: 1, dia: 'hoy', hora: '7:10 a. m.', categorias: ['Programación', 'Calendarios Ligas'], pdf: true, imagen: '',
+      { id: 1, link: 'https://difutbol.org/wp/?p=11712', dia: 'hoy', hora: '7:10 a. m.', categorias: ['Programación', 'Calendarios Ligas'], pdf: true, imagen: '',
         titulo: 'CAMPEONATO NACIONAL INTERCLUBES DE FUTBOL PLAYA MASCULINO 2026, CATEGORIA LIBRE, CLASIFICATORIO PARA COPA LIBERTADORES 2026 – GRUPO UNO SEDE BOGOTA Y GRUPO DOS SEDE BARRANQUILLA', resumen: '' },
-      { id: 2, dia: 'ayer', hora: '4:20 p. m.', categorias: ['Boletines', 'Reglamentos'], pdf: false, imagen: '',
+      { id: 2, link: 'https://difutbol.org/wp/?p=11706', dia: 'ayer', hora: '4:20 p. m.', categorias: ['Boletines', 'Reglamentos'], pdf: false, imagen: '',
         titulo: 'CIRCULAR 004 – DIFUTBOL – ACTUALIZACIÓN DE DATOS – COMET',
         resumen: 'Bogotá D.C., 02 de octubre de 2026. A las ligas departamentales de fútbol, clubes aficionados, jugadores, directivos y cuerpos técnicos. Asunto: actualización general y obligatoria de datos para los Campeonatos 2027 del fútbol aficionado asociado…' }
     ] };
